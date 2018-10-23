@@ -1,23 +1,20 @@
 import re
-import SSGLog
-import nltk
-from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.stem import WordNetLemmatizer
-from nltk import pos_tag, word_tokenize
-from nltk.stem.lancaster import LancasterStemmer
-from stemming.porter2 import stem
-from nltk.stem.snowball import SnowballStemmer
 
 def cleanhtml(raw_html):
-  cleanr = re.compile('<.*?>')
-  cleantext = re.sub(cleanr, ' ', raw_html)
-  return cleantext
+    cleanr = re.compile('<.*?>')
+    cleantext = re.sub(cleanr, ' ', raw_html)
+    return cleantext
+
+def get_filename(path):
+    filename = re.findall("(?<=\-)(.*?)(?=\.)",path)
+    return filename
 
 
-logger = SSGLog.setup_custom_logger('TextfilterSTEM')
+# logger = SSGLog.setup_custom_logger('TextfilterSTEM')
+# filepath = 'C:\\Users\\sidharth.m\\Desktop\\WikiData\\wikiremaining\\wiki1\\1665-Biostatistics.txt'
+# with open(filepath, "r") as myfile:
+def cleaningtxt(data):
 
-with open('C:\\Users\\sidharth.m\\Desktop\\WikiData\\wikiremaining\\wiki1\\723-Argo Navis.txt', "r") as myfile:
-    data = myfile.read()
     text = str(data)
 
     text1 = cleanhtml(text)
@@ -25,7 +22,10 @@ with open('C:\\Users\\sidharth.m\\Desktop\\WikiData\\wikiremaining\\wiki1\\723-A
     text3 = re.sub(r"\\t|\\r|\\n|\&n", "", text2)
     text4 = text3.replace('/', ' ')
     words = text4.split()
-    # print(words)
+    return words
+#
+#
+#     print(words)
 
     # #Stem1
     # text5 = [" ".join([stem(word) for word in sentence.split(" ")]) for sentence in words]
@@ -39,24 +39,24 @@ with open('C:\\Users\\sidharth.m\\Desktop\\WikiData\\wikiremaining\\wiki1\\723-A
     # text5 = st.stem(wordss)
     # print(text5)
 
-    #Stem 3
-    stemmer = SnowballStemmer("english")
-
-    stemmed = [stemmer.stem(word) for word in words]
-    text5 = ' '.join(stemmed)
-    text6 = []
-    for word in text5.split():
-        # print(word)
-        if word.endswith('i'):
-            # print(word)
-            word = word[:-1]
-            # print(word)
-            text6.append(word)
-        else:
-            text6.append(word)
-    # print(text6)
-    text6 = ' '.join(text6)
-    logger.info(text6)
+    # #Stem 3
+    # stemmer = SnowballStemmer("english")
+    #
+    # stemmed = [stemmer.stem(word) for word in words]
+    # text5 = ' '.join(stemmed)
+    # text6 = []
+    # for word in text5.split():
+    #     # print(word)
+    #     if word.endswith('i'):
+    #         # print(word)
+    #         word = word[:-1]
+    #         # print(word)
+    #         text6.append(word)
+    #     else:
+    #         text6.append(word)
+    # # print(text6)
+    # text6 = ' '.join(text6)
+    # logger.info(text6)
 
 
 
