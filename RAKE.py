@@ -19,7 +19,6 @@ import nltk
 debug = False
 test = True
 
-
 def is_number(s):
     try:
         float(s) if '.' in s else int(s)
@@ -150,22 +149,22 @@ if __name__ == '__main__':
         logger = SSGLog.setup_custom_logger('34ArithmeticMeanRAKE-Logger')
         mypath = '34-Arithmetic mean.txt'
 
-        with open(mypath, encoding='utf-8') as myfile:
+        with open(mypath, 'r') as myfile:
 
                         data = myfile.read().replace('\n', '')
                         text = cleaningtxt(data)
+                        # print(text)
                         filenamestring = (get_filename(mypath))
                         filenamestring = (' '.join(filenamestring)).split()
 
-                        # stemmer = SnowballStemmer("english")
-                        # stemmed = [stemmer.stem(word) for word in text]
-
                         stemmer = nltk.stem.SnowballStemmer('english')
                         stemmed = [stemmer.stem(word) for word in text]
+                        # print(stemmed)
 
+                        # Stemmed File Name
                         stemmedfilestring = [stemmer.stem(word) for word in filenamestring]
-                        print(stemmedfilestring)
 
+                        # Pushing stemmed file name into stemmed list
                         stemmed = stemmed + stemmedfilestring
 
                         text6 = []
@@ -191,25 +190,20 @@ if __name__ == '__main__':
                                 text7.append(word)
                             else:
                                 text7.append(word)
-                        print(text7)
-
+                        # print(text7)
 
                         # Split text into sentences
-
                         sentenceList = split_sentences(text6)
                         stoppath = "SmartStoplist.txt"  # SMART stoplist misses some of the lower-scoring keywords
                         stopwordpattern = build_stop_word_regex(stoppath)
 
                         # generate candidate keywords
-
                         phraseList = generate_candidate_keywords(sentenceList, stopwordpattern)
 
                         # calculate individual word scores
-
                         wordscores = calculate_word_scores(phraseList)
 
                         # generate candidate keyword scores
-
                         keywordcandidates = generate_candidate_keyword_scores(phraseList, wordscores)
                         if debug: print(keywordcandidates)
 
@@ -232,7 +226,6 @@ if __name__ == '__main__':
                         # logger.info("OUTLIST- %s", outlist)
 
                         #To add simillar word scores and multiply title scores
-
                         output = defaultdict(int)
 
                         for letter, number in outlist:
@@ -240,7 +233,6 @@ if __name__ == '__main__':
                                 output[letter] += number
 
                         #To sort in descending
-
                         sort1 = sorted(output.items(), key=lambda x: x[1], reverse=True)
 
                         for letter, number in sort1:
@@ -250,7 +242,6 @@ if __name__ == '__main__':
                                 output[letter] = number + largestnumber
 
                         logger.info((sorted(output.items(), key=lambda x: x[1], reverse=True)))
-
 
     except Exception:
         print("Something is wrong! Error logged to log file!")
