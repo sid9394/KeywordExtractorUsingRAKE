@@ -5,15 +5,8 @@
 # In M. W. Berry and J. Kogan (Eds.), Text Mining: Applications and Theory.unknown: John Wiley and Sons, Ltd.
 
 import re
-import winsound
 import operator
-import traceback
-import SSGLog
 from collections import defaultdict
-from nltk.stem.snowball import SnowballStemmer
-from NoiseFilteration import get_filename
-from NoiseFilteration import cleaningtxt
-from operator import itemgetter
 import nltk
 
 debug = False
@@ -126,6 +119,33 @@ def generate_candidate_keyword_scores(phrase_list, word_score):
         keyword_candidates[phrase] = candidate_score
     return keyword_candidates
 
+def stemmingtool(text):
+
+    stemmer = nltk.stem.SnowballStemmer('english')
+    stemmed = [stemmer.stem(word) for word in text]
+
+    text = ''.join(stemmed)
+    return text
+
+def cleanhtml(raw_html):
+    cleanr = re.compile('<.*?>')
+    cleantext = re.sub(cleanr, ' ', raw_html)
+    return cleantext
+
+def get_filename(path):
+    filename = re.findall("(?<=\-)(.*?)(?=\.)",path)
+    return filename
+
+def cleaningtxt(data):
+
+    text = str(data)
+
+    text1 = cleanhtml(text)
+    text2 = str(text1)
+    text3 = re.sub(r"\\t|\\r|\\n|\&n", "", text2)
+    spremoval = re.sub('[^a-zA-Z0-9 \n\.]', '', text3)
+    words = spremoval.split()
+    return words
 
 class Rake(object):
     def __init__(self, stop_words_path):
@@ -144,109 +164,62 @@ class Rake(object):
         sorted_keywords = sorted(keyword_candidates.items(), key=operator.itemgetter(1), reverse=True)
         return sorted_keywords
 
-if __name__ == '__main__':
-    try:
-        logger = SSGLog.setup_custom_logger('34ArithmeticMeanRAKE-Logger')
-        mypath = '34-Arithmetic mean.txt'
+def rake_words(text):
 
-        with open(mypath, 'r') as myfile:
+    text1 = cleaningtxt(text)
+    text1 = ' '.join(text1)
+    print(text1)
 
-                        data = myfile.read().replace('\n', '')
-                        text = cleaningtxt(data)
-                        # print(text)
-                        filenamestring = (get_filename(mypath))
-                        filenamestring = (' '.join(filenamestring)).split()
+    text2 = stemmingtool(text1)
+    print(text2)
 
-                        stemmer = nltk.stem.SnowballStemmer('english')
-                        stemmed = [stemmer.stem(word) for word in text]
-                        # print(stemmed)
+    # Split text into sentences
+    sentenceList = split_sentences(text2)
+    stoppath = "SmartStoplist.txt"  # SMART stoplist misses some of the lower-scoring keywords
+    stopwordpattern = build_stop_word_regex(stoppath)
 
-                        # Stemmed File Name
-                        stemmedfilestring = [stemmer.stem(word) for word in filenamestring]
+    # generate candidate keywords
+    phraseList = generate_candidate_keywords(sentenceList, stopwordpattern)
 
-                        # Pushing stemmed file name into stemmed list
-                        stemmed = stemmed + stemmedfilestring
+    # calculate individual word scores
+    wordscores = calculate_word_scores(phraseList)
 
-                        text6 = []
-                        for word in stemmed:
-                            # print(word)
-                            if word.endswith('i'):
-                                # print(word)
-                                word = word[:-1]
-                                # print(word)
-                                text6.append(word)
-                            else:
-                                text6.append(word)
-                        # print(text6)
-                        text6 = ' '.join(text6)
+    # generate candidate keyword scores
+    keywordcandidates = generate_candidate_keyword_scores(phraseList, wordscores)
+    if debug: print(keywordcandidates)
 
-                        text7 = []
-                        for word in stemmedfilestring:
-                            # print(word)
-                            if word.endswith('i'):
-                                # print(word)
-                                word = word[:-1]
-                                # print(word)
-                                text7.append(word)
-                            else:
-                                text7.append(word)
-                        # print(text7)
+    sortedKeywords = sorted(keywordcandidates.items(), key=operator.itemgetter(1), reverse=True)
+    if debug: print(sortedKeywords)
 
-                        # Split text into sentences
-                        sentenceList = split_sentences(text6)
-                        stoppath = "SmartStoplist.txt"  # SMART stoplist misses some of the lower-scoring keywords
-                        stopwordpattern = build_stop_word_regex(stoppath)
+    totalKeywords = len(sortedKeywords)
+    if debug: print(totalKeywords)
+    sortedKeywords[int(0):int(totalKeywords / 3)]
 
-                        # generate candidate keywords
-                        phraseList = generate_candidate_keywords(sentenceList, stopwordpattern)
+    rake = Rake("SmartStoplist.txt")
+    keywords = rake.run(text2)
 
-                        # calculate individual word scores
-                        wordscores = calculate_word_scores(phraseList)
+    outlist = [(word, value) for words, value in keywords for word in words.split()]
 
-                        # generate candidate keyword scores
-                        keywordcandidates = generate_candidate_keyword_scores(phraseList, wordscores)
-                        if debug: print(keywordcandidates)
+    #To add simillar word scores
+    output = defaultdict(int)
 
-                        sortedKeywords = sorted(keywordcandidates.items(), key=operator.itemgetter(1), reverse=True)
-                        if debug: print(sortedKeywords)
+    for letter, number in outlist:
+        output[letter] += number
 
-                        totalKeywords = len(sortedKeywords)
-                        if debug: print(totalKeywords)
-                        sortedKeywords[int(0):int(totalKeywords / 3)]
+    #To sort in descending
+    sort1 = sorted(output.items(), key=lambda x: x[1], reverse=True)
 
-                        rake = Rake("SmartStoplist.txt")
-                        keywords = rake.run(text6)
-                        # # logger.info(keywords)
+    # #To give priority to 2 or 3 letter words/Acronyms
+    # for letter, number in sort1:
+    #     largestnumber = max(l[1] for l in sort1)
+    #
+    #     if len(letter) <= 3:
+    #         output[letter] = number + largestnumber
 
-                        outlist = [(word, value) for words, value in keywords for word in words.split()]
-                        # print("Outlist - ", outlist)
+    KeywordOutput = sorted(sort1, key=lambda x: x[1], reverse=True)
 
-                        #For Raw Rake file
-
-                        # logger.info("OUTLIST- %s", outlist)
-
-                        #To add simillar word scores and multiply title scores
-                        output = defaultdict(int)
-
-                        for letter, number in outlist:
-
-                                output[letter] += number
-
-                        #To sort in descending
-                        sort1 = sorted(output.items(), key=lambda x: x[1], reverse=True)
-
-                        for letter, number in sort1:
-                            # print(max(l[1] for l in sort1))
-                            largestnumber = max(l[1] for l in sort1)
-                            if letter in text7: # to check if letter is in the filenamestring
-                                output[letter] = number + largestnumber
-
-                        logger.info((sorted(output.items(), key=lambda x: x[1], reverse=True)))
-
-    except Exception:
-        print("Something is wrong! Error logged to log file!")
-        print("Something is wrong!")
-        traceback.print_exc()
-        winsound.Beep(5000, 200)
-    finally:
-        print("Done!")
+    # KeywordOutput1 = KeywordOutput[:5]
+    #
+    # FinalKeywordOutput = [i[0] for i in KeywordOutput1]
+    #
+    return KeywordOutput
